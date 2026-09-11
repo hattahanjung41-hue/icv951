@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from 'react';
 import { AnimatedBirds } from '../components/AnimatedBirds';
 import { AnimatedSun } from '../components/AnimatedSun';
 import { AnimatedWaves } from '../components/AnimatedWaves';
-import { fetchVisibleMemories, subscribeToMemoryChanges } from '../lib/memories';
-import { fetchLiveSettings, subscribeToLiveSettings } from '../lib/liveSettings';
+import { fetchVisibleMemories, photoUrlsOf, subscribeToMemoryChanges } from '../lib/memories';
+import { fetchLiveSettings, pushLivePosition, subscribeToLiveSettings } from '../lib/liveSettings';
 import type { LiveSettingsRow, MemoryWithPhotos } from '../lib/types';
 
 const DEFAULT_DURATION = 8_000;
@@ -28,12 +28,6 @@ function formatClock(value: string) {
     hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Jayapura', hourCycle: 'h23',
   }).format(new Date(value));
   return `${formatted.replace('.', ':')} WIT`;
-}
-
-/** Cover first, then the rest of the submission in sort order — the sequence the Live display steps through. */
-function photoUrlsOf(memory: MemoryWithPhotos) {
-  const gallery = memory.photos.filter((photo) => photo.url !== memory.coverUrl).map((photo) => photo.url);
-  return [memory.coverUrl, ...gallery];
 }
 
 /**
@@ -68,17 +62,50 @@ export function Live() {
   const knownIdsRef = useRef(new Set<string>());
   const isNewMemoryRef = useRef(false);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastNavSeqRef = useRef<number | null>(null);
 
   function clearTimer() {
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = null;
   }
 
+  /**
+   * Fire-and-forget: reports playback position for the admin preview. Never blocks local
+   * playback. Captures nav_seq at send time — if a newer Admin command (Next/Prev/Show Now)
+   * lands before this resolves, the RPC's nav_seq guard makes it a no-op instead of an
+   * out-of-order overwrite.
+   */
+  function pushPosition() {
+    const id = currentIdRef.current;
+    const idx = photoIndexRef.current;
+    const expectedNavSeq = settingsRef.current?.nav_seq ?? 0;
+    // eslint-disable-next-line no-console
+    console.log('[live] pushPosition ->', { id, idx, expectedNavSeq });
+    void pushLivePosition(id, idx, expectedNavSeq)
+      .then(() => {
+        // eslint-disable-next-line no-console
+        console.log('[live] pushPosition resolved', { id, idx, expectedNavSeq });
+      })
+      .catch((err) => {
+        console.error('[live] pushPosition failed', { id, idx, expectedNavSeq, err });
+      });
+  }
+
   function schedule() {
     clearTimer();
-    if (settingsRef.current?.is_paused || !currentIdRef.current) return;
+    if (settingsRef.current?.is_paused || !currentIdRef.current) {
+      console.log('[live] schedule: not scheduling', {
+        is_paused: settingsRef.current?.is_paused,
+        currentId: currentIdRef.current,
+      });
+      return;
+    }
     const seconds = settingsRef.current?.display_duration_seconds ?? DEFAULT_DURATION / 1000;
-    timerRef.current = setTimeout(advance, Math.max(1, seconds) * 1000);
+    console.log('[live] schedule: timer set', { currentId: currentIdRef.current, photoIndex: photoIndexRef.current, seconds });
+    timerRef.current = setTimeout(() => {
+      console.log('[live] timer fired -> advance()', { currentId: currentIdRef.current, photoIndex: photoIndexRef.current });
+      advance();
+    }, Math.max(1, seconds) * 1000);
   }
 
   /** Timer tick: step to the next photo within the current memory, or hand off to advanceMemory once its photos are exhausted. */
@@ -86,16 +113,27 @@ export function Live() {
     clearTimer();
     const currentMemory = memoryRef.current.find((memory) => memory.id === currentIdRef.current);
     const photoCount = currentMemory ? photoUrlsOf(currentMemory).length : 0;
+    console.log('[live] advance() called', {
+      before: { currentId: currentIdRef.current, photoIndex: photoIndexRef.current },
+      photoCount,
+    });
     if (photoCount > 1 && photoIndexRef.current + 1 < photoCount) {
       photoIndexRef.current += 1;
       setPhotoIndex(photoIndexRef.current);
+      console.log('[live] advance(): stepped photo within memory', {
+        currentId: currentIdRef.current,
+        after: { photoIndex: photoIndexRef.current },
+      });
+      pushPosition();
       schedule();
       return;
     }
+    console.log('[live] advance(): photos exhausted -> advanceMemory()');
     advanceMemory();
   }
 
   function advanceMemory() {
+    console.log('[live] advanceMemory() called', { before: { currentId: currentIdRef.current } });
     clearTimer();
     const visibleIds = new Set(memoryRef.current.map((memory) => memory.id));
     newQueueRef.current = newQueueRef.current.filter((id) => visibleIds.has(id));
@@ -107,6 +145,8 @@ export function Live() {
       setPhotoIndex(0);
       isNewMemoryRef.current = true;
       setIsNewMemory(true);
+      console.log('[live] advanceMemory(): interrupting with queued new memory', { after: { currentId: queuedId } });
+      pushPosition();
       schedule();
       return;
     }
@@ -119,6 +159,8 @@ export function Live() {
       setPhotoIndex(0);
       isNewMemoryRef.current = false;
       setIsNewMemory(false);
+      console.log('[live] advanceMemory(): no visible memories left -> cleared');
+      pushPosition();
       return;
     }
     indexRef.current = (indexRef.current + 1) % order.length;
@@ -129,6 +171,90 @@ export function Live() {
     setPhotoIndex(0);
     isNewMemoryRef.current = false;
     setIsNewMemory(false);
+    console.log('[live] advanceMemory(): moved to next memory in order', { after: { currentId: nextId } });
+    pushPosition();
+    schedule();
+  }
+
+  /** Manual step back (admin Prev): previous photo in the current memory, or the last photo of the previous memory in play order. */
+  function goBack() {
+    console.log('[live] goBack() called', { before: { currentId: currentIdRef.current, photoIndex: photoIndexRef.current } });
+    clearTimer();
+    if (photoIndexRef.current > 0) {
+      photoIndexRef.current -= 1;
+      setPhotoIndex(photoIndexRef.current);
+      console.log('[live] goBack(): stepped photo within memory', {
+        currentId: currentIdRef.current,
+        after: { photoIndex: photoIndexRef.current },
+      });
+      pushPosition();
+      schedule();
+      return;
+    }
+    goToPreviousMemory();
+  }
+
+  function goToPreviousMemory() {
+    clearTimer();
+    const visibleIds = new Set(memoryRef.current.map((memory) => memory.id));
+    const order = orderRef.current.filter((id) => visibleIds.has(id));
+    orderRef.current = order;
+    if (!order.length) {
+      currentIdRef.current = null;
+      setCurrentId(null);
+      photoIndexRef.current = 0;
+      setPhotoIndex(0);
+      pushPosition();
+      return;
+    }
+    indexRef.current = (indexRef.current - 1 + order.length) % order.length;
+    const prevId = order[indexRef.current];
+    const prevMemory = memoryRef.current.find((memory) => memory.id === prevId);
+    const lastPhotoIndex = prevMemory ? Math.max(0, photoUrlsOf(prevMemory).length - 1) : 0;
+    currentIdRef.current = prevId;
+    setCurrentId(prevId);
+    photoIndexRef.current = lastPhotoIndex;
+    setPhotoIndex(lastPhotoIndex);
+    isNewMemoryRef.current = false;
+    setIsNewMemory(false);
+    console.log('[live] goToPreviousMemory(): moved to previous memory in order', {
+      after: { currentId: prevId, photoIndex: lastPhotoIndex },
+    });
+    pushPosition();
+    schedule();
+  }
+
+  /** Admin "Show Now": jump straight to an explicit memory + photo, not a relative step. */
+  function jumpTo(memoryId: string | null, photoIndex: number) {
+    console.log('[live] jumpTo() called', {
+      target: { memoryId, photoIndex },
+      before: { currentId: currentIdRef.current, photoIndex: photoIndexRef.current },
+    });
+    clearTimer();
+    if (!memoryId) {
+      console.log('[live] jumpTo(): no memoryId, ignoring');
+      return;
+    }
+    const memory = memoryRef.current.find((m) => m.id === memoryId);
+    if (!memory) {
+      console.log('[live] jumpTo(): target memory not in local visible list, ignoring', {
+        memoryId,
+        visibleIds: memoryRef.current.map((m) => m.id),
+      });
+      return; // not currently visible (e.g. hidden) — nothing to jump to
+    }
+    const photoCount = photoUrlsOf(memory).length;
+    const clampedIndex = Math.min(Math.max(0, photoIndex), Math.max(0, photoCount - 1));
+    currentIdRef.current = memoryId;
+    setCurrentId(memoryId);
+    photoIndexRef.current = clampedIndex;
+    setPhotoIndex(clampedIndex);
+    const posInOrder = orderRef.current.indexOf(memoryId);
+    if (posInOrder !== -1) indexRef.current = posInOrder;
+    isNewMemoryRef.current = false;
+    setIsNewMemory(false);
+    console.log('[live] jumpTo(): after', { currentId: currentIdRef.current, photoIndex: photoIndexRef.current });
+    pushPosition();
     schedule();
   }
 
@@ -147,14 +273,31 @@ export function Live() {
     memoryRef.current = next;
     setMemories(next);
     const currentStillVisible = currentIdRef.current && ids.includes(currentIdRef.current);
-    if (!currentStillVisible) advanceMemory();
-    else if (arrivals.length && settingsRef.current?.interruption_enabled !== false && !isNewMemoryRef.current) advanceMemory();
+    console.log('[live] installMemories() called', {
+      allowInterrupt,
+      currentId: currentIdRef.current,
+      currentStillVisible,
+      arrivals: arrivals.map((m) => m.id),
+      interruption_enabled: settingsRef.current?.interruption_enabled,
+      isNewMemory: isNewMemoryRef.current,
+    });
+    if (!currentStillVisible) {
+      console.log('[live] installMemories(): current memory no longer visible -> advanceMemory()');
+      advanceMemory();
+    } else if (arrivals.length && settingsRef.current?.interruption_enabled !== false && !isNewMemoryRef.current) {
+      console.log('[live] installMemories(): new arrival interrupting -> advanceMemory()');
+      advanceMemory();
+    }
   }
 
   async function refresh(allowInterrupt = false) {
     try {
       const next = await fetchVisibleMemories();
       setOffline(false);
+      console.log('[live] refresh(): memories/memory_photos changed, refetched', {
+        allowInterrupt,
+        count: next.length,
+      });
       installMemories(next, allowInterrupt);
     } catch {
       // Retain loaded memories instead of blanking the event screen.
@@ -169,6 +312,7 @@ export function Live() {
         const [nextMemories, nextSettings] = await Promise.all([fetchVisibleMemories(), fetchLiveSettings()]);
         if (!active) return;
         settingsRef.current = nextSettings;
+        lastNavSeqRef.current = nextSettings.nav_seq;
         setSettings(nextSettings);
         installMemories(nextMemories);
         setOffline(false);
@@ -179,11 +323,39 @@ export function Live() {
     load();
     const unsubscribeMemories = subscribeToMemoryChanges(() => void refresh(true));
     const unsubscribeSettings = subscribeToLiveSettings((next) => {
+      const prev = settingsRef.current;
       settingsRef.current = next;
       setSettings(next);
-      if (next.is_paused) clearTimer();
-      else if (currentIdRef.current) schedule();
-      else advanceMemory();
+
+      // Admin-forced Prev/Next: act once per new nav_seq, never on the value already
+      // in place when this tab connected (that's just baseline, not a command to replay).
+      const isNewNavCommand = lastNavSeqRef.current !== null && next.nav_seq !== lastNavSeqRef.current;
+      // eslint-disable-next-line no-console
+      console.log('[live] settings realtime update', {
+        nav_action: next.nav_action,
+        nav_seq: next.nav_seq,
+        prevNavSeq: lastNavSeqRef.current,
+        isNewNavCommand,
+        current_memory_id: next.current_memory_id,
+        current_photo_index: next.current_photo_index,
+        is_paused: next.is_paused,
+      });
+      lastNavSeqRef.current = next.nav_seq;
+      if (isNewNavCommand) {
+        // 'next'/'prev' are relative navigation commands; anything else (nav_action is null)
+        // is a Show Now direct position update — adopt current_memory_id/current_photo_index as-is.
+        if (next.nav_action === 'next') advance();
+        else if (next.nav_action === 'prev') goBack();
+        else jumpTo(next.current_memory_id, next.current_photo_index);
+      }
+
+      // Pause/duration changes — diffed against the previous row so this ignores updates
+      // that are only our own position echo (pushPosition writes the same row).
+      if (!prev || prev.is_paused !== next.is_paused || prev.display_duration_seconds !== next.display_duration_seconds) {
+        if (next.is_paused) clearTimer();
+        else if (currentIdRef.current) schedule();
+        else advanceMemory();
+      }
     });
     const onOnline = () => void refresh(true);
     const onOffline = () => setOffline(true);

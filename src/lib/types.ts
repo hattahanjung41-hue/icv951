@@ -32,6 +32,10 @@ export interface LiveSettingsRow {
   auto_loop: boolean;
   interruption_enabled: boolean;
   is_paused: boolean;
+  current_memory_id: string | null;
+  current_photo_index: number;
+  nav_action: 'next' | 'prev' | null;
+  nav_seq: number;
   updated_at: string;
 }
 

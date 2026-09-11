@@ -6,6 +6,12 @@ function photoUrl(storagePath: string): string {
   return data.publicUrl;
 }
 
+/** Cover first, then the rest of the submission in sort order — the sequence /live steps through. */
+export function photoUrlsOf(memory: MemoryWithPhotos): string[] {
+  const gallery = memory.photos.filter((photo) => photo.url !== memory.coverUrl).map((photo) => photo.url);
+  return [memory.coverUrl, ...gallery];
+}
+
 function attachUrls(memory: MemoryRow, photos: MemoryPhotoRow[]): MemoryWithPhotos {
   const sorted = [...photos].sort((a, b) => a.sort_order - b.sort_order);
   const withUrls = sorted.map((p) => ({ ...p, url: photoUrl(p.storage_path) }));

@@ -55,6 +55,25 @@ create table if not exists live_settings (
 insert into live_settings (id) values (1)
   on conflict (id) do nothing;
 
+-- Live nav/position sync (admin <-> /live), persisted so a reconnecting
+-- /live tab or a second admin tab always converges on the same state.
+alter table live_settings
+  add column if not exists current_memory_id uuid references memories (id) on delete set null;
+alter table live_settings
+  add column if not exists current_photo_index int not null default 0;
+alter table live_settings
+  add column if not exists nav_action text;
+alter table live_settings
+  add column if not exists nav_seq bigint not null default 0;
+
+-- nav_action is ONLY a relative navigation command ('next' / 'prev'). Show Now is a direct
+-- position update (current_memory_id/current_photo_index) and always leaves nav_action null —
+-- it is never itself a nav_action value.
+alter table live_settings drop constraint if exists live_settings_nav_action_check;
+alter table live_settings
+  add constraint live_settings_nav_action_check
+  check (nav_action is null or nav_action in ('next', 'prev'));
+
 -- Admins allow-list. Add rows here (or via Supabase Auth admin UI +
 -- this table) for each event operator's auth.users id.
 create table if not exists admins (
@@ -117,6 +136,35 @@ drop trigger if exists trg_enforce_max_20_photos on memory_photos;
 create trigger trg_enforce_max_20_photos
   before insert on memory_photos
   for each row execute function enforce_max_20_photos();
+
+-- Lets the public, unauthenticated /live screen report its own playback
+-- position back to live_settings without needing general UPDATE access to
+-- the row (pause/duration/shuffle/etc. stay admin-only via RLS below).
+--
+-- p_expected_nav_seq guards against a stale position report: /live captures
+-- nav_seq at the moment it starts the write, and the update only applies if
+-- nav_seq is still the same value — i.e. no newer Admin command (Next/Prev/
+-- Show Now) has landed in the meantime. A late-arriving, superseded write
+-- becomes a no-op instead of clobbering a newer position.
+-- Drop every prior signature explicitly (not just the immediately-previous one) so re-running
+-- this file always converges on exactly one set_live_position function, regardless of which
+-- earlier version is currently deployed.
+drop function if exists set_live_position(uuid, int);
+drop function if exists set_live_position(uuid, int, bigint);
+
+create or replace function set_live_position(p_memory_id uuid, p_photo_index int, p_expected_nav_seq bigint)
+returns void
+language sql
+security definer
+set search_path = public
+as $$
+  update live_settings
+  set current_memory_id = p_memory_id,
+      current_photo_index = p_photo_index
+  where id = 1 and nav_seq = p_expected_nav_seq;
+$$;
+
+grant execute on function set_live_position(uuid, int, bigint) to anon, authenticated;
 
 -- ------------------------------------------------------------
 -- Row Level Security
