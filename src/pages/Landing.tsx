@@ -1,4 +1,6 @@
+import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { isCurrentUserAdmin, onAuthStateChange } from '../lib/adminAuth';
 
 const GOLD = '#caa23e';
 const GOLD_LIGHT = '#f3dfa0';
@@ -6,7 +8,25 @@ const GOLD_DEEP = '#9a6a24';
 /** The constellation art's own paper tone (sampled from its lower half), so the page continues it seamlessly. */
 const PAPER = '#faf1e3';
 
+/** True while a signed-in admin is on this device — /guest is admin-only, so guests never see its button. */
+function useIsAdmin(): boolean {
+  const [isAdmin, setIsAdmin] = useState(false);
+  useEffect(() => {
+    let active = true;
+    const check = () => isCurrentUserAdmin().then((ok) => active && setIsAdmin(ok));
+    check();
+    const unsubscribe = onAuthStateChange(() => check());
+    return () => {
+      active = false;
+      unsubscribe();
+    };
+  }, []);
+  return isAdmin;
+}
+
 export function Landing() {
+  const isAdmin = useIsAdmin();
+
   return (
     <div className="landing">
       <header className="landing-topbar">
@@ -52,6 +72,21 @@ export function Landing() {
               <SparkIcon size={16} />
             </span>
           </Link>
+          {isAdmin && (
+            <Link to="/guest" className="landing-cta">
+              <span className="landing-cta__spark landing-cta__spark--left" aria-hidden="true">
+                <SparkIcon size={16} />
+              </span>
+              <span className="landing-cta__icon">
+                <CameraIcon />
+              </span>
+              Upload Memory
+              <ChevronIcon />
+              <span className="landing-cta__spark landing-cta__spark--right" aria-hidden="true">
+                <SparkIcon size={16} />
+              </span>
+            </Link>
+          )}
         </div>
 
         <DiamondRule className="landing-rule" />
@@ -170,7 +205,10 @@ export function Landing() {
           line-height: 1.35;
         }
 
-        .landing-actions { margin-top: 22px; display: flex; justify-content: center; }
+        /* One max-content column: stacked buttons all stretch to the widest one, so they match. */
+        .landing-actions {
+          margin-top: 22px; display: grid; grid-template-columns: max-content; justify-content: center; gap: 14px;
+        }
         .landing-cta {
           position: relative;
           display: inline-flex; align-items: center; justify-content: center; gap: 14px;
@@ -326,6 +364,15 @@ function GalleryIcon() {
       <rect x="3" y="4" width="18" height="16" rx="2" />
       <circle cx="9" cy="10" r="1.6" />
       <path d="M4 17l5-5 4 4 3-3 4 4" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function CameraIcon() {
+  return (
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={GOLD_LIGHT} strokeWidth="1.8" aria-hidden="true">
+      <path d="M4 8h3l2-3h6l2 3h3v11H4z" strokeLinejoin="round" />
+      <circle cx="12" cy="13" r="3.5" />
     </svg>
   );
 }
