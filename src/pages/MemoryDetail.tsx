@@ -165,9 +165,12 @@ export function MemoryDetail() {
         .detail-stage__frame { padding: 6px; display: flex; justify-content: center; background: #e9e3d6; }
         .detail-stage__photo { position: relative; display: inline-block; max-width: 100%; line-height: 0; }
         .detail-stage__photo img { display: block; max-width: 100%; max-height: 62vh; width: auto; height: auto; }
+        /* Full photo width, pinned to the bottom — same as the download composite. Its transparent
+           top simply overflows (clipped) on photos wider than the frame's own aspect ratio. */
+        .detail-stage__photo { overflow: hidden; }
         .detail-stage__photo .detail-stage__lowerthird {
-          position: absolute; inset: 0; width: 100%; height: 100%; max-height: none;
-          object-fit: contain; object-position: bottom; pointer-events: none;
+          position: absolute; left: 0; bottom: 0; width: 100%; height: auto; max-height: none;
+          pointer-events: none;
         }
         .detail-stage__download {
           position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; z-index: 2;

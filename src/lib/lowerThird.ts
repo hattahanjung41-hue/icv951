@@ -28,7 +28,11 @@ function loadImage(src: string): Promise<HTMLImageElement> {
   });
 }
 
-/** Renders the photo with its lower-third frame burned in, matching the on-screen object-fit:contain/bottom layout. */
+/**
+ * Renders the photo with its lower-third frame burned in. The frame is scaled to the photo's full
+ * width and pinned to the bottom (matching the on-screen overlay), so it fits any phone's aspect
+ * ratio: on photos wider than the frame, only its empty transparent top gets clipped.
+ */
 async function compositeWithFrame(photo: PhotoLike): Promise<Blob> {
   const response = await fetch(photo.url);
   const blob = await response.blob();
@@ -42,12 +46,8 @@ async function compositeWithFrame(photo: PhotoLike): Promise<Blob> {
     if (!ctx) throw new Error('canvas 2d context unavailable');
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-    const scale = Math.min(canvas.width / frame.naturalWidth, canvas.height / frame.naturalHeight);
-    const drawWidth = frame.naturalWidth * scale;
-    const drawHeight = frame.naturalHeight * scale;
-    const dx = (canvas.width - drawWidth) / 2;
-    const dy = canvas.height - drawHeight;
-    ctx.drawImage(frame, dx, dy, drawWidth, drawHeight);
+    const drawHeight = frame.naturalHeight * (canvas.width / frame.naturalWidth);
+    ctx.drawImage(frame, 0, canvas.height - drawHeight, canvas.width, drawHeight);
 
     return await new Promise<Blob>((resolve, reject) => {
       canvas.toBlob((result) => (result ? resolve(result) : reject(new Error('canvas toBlob failed'))), 'image/png');
