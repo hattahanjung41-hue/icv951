@@ -1,5 +1,5 @@
 -- ============================================================
--- ICV AKSELERASI 951 — Memory Wall
+-- FAREWELL GALA DINNER — Memory Wall
 -- Run this in the Supabase SQL editor (Project → SQL Editor).
 -- Safe to re-run: uses IF NOT EXISTS / OR REPLACE where possible.
 -- ============================================================
@@ -182,10 +182,12 @@ create policy "public can read visible memories"
   on memories for select
   using (is_hidden = false or is_admin());
 
+-- Only admins upload now (operator-run event: the admin is the one taking photos).
 drop policy if exists "guests can create memories" on memories;
-create policy "guests can create memories"
+drop policy if exists "admins can create memories" on memories;
+create policy "admins can create memories"
   on memories for insert
-  with check (is_hidden = false);
+  with check (is_hidden = false and is_admin());
 
 drop policy if exists "admins can update memories" on memories;
 create policy "admins can update memories"
@@ -212,9 +214,10 @@ create policy "public can read photos of visible memories"
   );
 
 drop policy if exists "guests can add photos to any memory" on memory_photos;
-create policy "guests can add photos to any memory"
+drop policy if exists "admins can add photos to any memory" on memory_photos;
+create policy "admins can add photos to any memory"
   on memory_photos for insert
-  with check (true);
+  with check (is_admin());
 
 drop policy if exists "admins can delete photos" on memory_photos;
 create policy "admins can delete photos"

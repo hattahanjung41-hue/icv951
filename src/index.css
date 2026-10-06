@@ -1,24 +1,24 @@
 :root {
-  /* ---- Color tokens (Tropical Vibes — sunset, beach resort, warm energetic) ---- */
+  /* ---- Color tokens (Midnight Red — deep crimson/oxblood, dark and moody) ---- */
   --sand-50: #fbf6ea;
   --sand-100: #f5edd9;
   --sand-200: #ecdfc0;
-  --ocean-600: #d9622f;
-  --ocean-700: #c2410c;
-  --ocean-800: #9a2f12;
-  --wave-deep: #7a2e12;
+  --ocean-600: #c2283f;
+  --ocean-700: #8c1526;
+  --ocean-800: #5c0e1a;
+  --wave-deep: #2e070d;
   --green-600: #a8631f;
   --green-700: #6b3410;
-  --sun-400: #f2a93c;
-  --sun-500: #eb9420;
-  --coral-500: #e07a4f;
+  --sun-400: #e2576b;
+  --sun-500: #d33850;
+  --coral-500: #c43552;
   --ink-900: #2e1f14;
   --ink-700: #4a3323;
   --ink-500: #7a6857;
   --white: #fffdf7;
   --line: rgba(46, 31, 20, 0.14);
-  --shadow-soft: 0 8px 24px rgba(122, 46, 18, 0.10);
-  --shadow-lift: 0 14px 34px rgba(122, 46, 18, 0.16);
+  --shadow-soft: 0 8px 24px rgba(92, 14, 26, 0.12);
+  --shadow-lift: 0 14px 34px rgba(92, 14, 26, 0.18);
 
   /* ---- Type ---- */
   --font-display: 'Baloo 2', system-ui, sans-serif;
@@ -56,9 +56,13 @@ body {
   color: var(--ink-900);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Stops mobile rubber-band overscroll from revealing page background past the real edge
+     (which can look like a stray gap below a full-bleed footer). */
+  overscroll-behavior-y: none;
 }
 
 #root {
+  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
@@ -283,8 +287,12 @@ p {
 .memory-card__frame { padding: 4px; }
 .memory-card__photo { position: relative; width: 100%; background: var(--sand-200); border-radius: 2px; overflow: hidden; }
 .memory-card__photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.memory-card__lowerthird {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  object-fit: contain; object-position: bottom; pointer-events: none; z-index: 1;
+}
 .memory-card__count {
-  position: absolute; top: 8px; right: 8px;
+  position: absolute; top: 8px; right: 8px; z-index: 2;
   background: rgba(10, 34, 43, 0.6); color: var(--white);
   font-size: 11.5px; font-weight: 700; padding: 4px 8px; border-radius: var(--radius-pill);
 }

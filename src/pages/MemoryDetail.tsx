@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { Header } from '../components/Header';
+import { downloadFilename, downloadPhotoWithFrame, lowerThirdSrc } from '../lib/lowerThird';
 import { fetchMemoryById } from '../lib/memories';
 import type { MemoryWithPhotos } from '../lib/types';
 
@@ -69,7 +70,7 @@ export function MemoryDetail() {
       <div className="detail-shell">
         <Header backTo="/memories" backLabel="Memory Wall" />
         <main className="container detail-missing">
-          <p className="kicker">ICV Akselerasi 951</p>
+          <p className="kicker">Farewell Gala Dinner</p>
           <h1 className="detail-missing__title eyebrow-script">This memory isn&apos;t here anymore</h1>
           <p className="detail-missing__desc">
             {state === 'error'
@@ -94,7 +95,19 @@ export function MemoryDetail() {
       <main className="container detail-main">
         <div className="detail-stage">
           <div className="photo-frame detail-stage__frame">
-            <img key={photo.id} src={photo.url} alt="" />
+            {/* Shrink-wraps the photo so the lower-third sits on the photo itself, not the letterbox around it. */}
+            <div className="detail-stage__photo">
+              <img key={photo.id} src={photo.url} alt="" />
+              <img src={lowerThirdSrc(photo)} alt="" aria-hidden="true" className="detail-stage__lowerthird" />
+              <button
+                type="button"
+                className="detail-stage__download"
+                aria-label={`Download photo ${index + 1}`}
+                onClick={() => void downloadPhotoWithFrame(photo, downloadFilename(m, m.photos.length > 1 ? index + 1 : undefined))}
+              >
+                <DownloadIcon />
+              </button>
+            </div>
           </div>
           {index > 0 && (
             <button aria-label="Previous photo" className="detail-stage__nav detail-stage__nav--prev" onClick={() => setIndex((i) => i - 1)}>
@@ -149,8 +162,18 @@ export function MemoryDetail() {
         .detail-missing__desc { margin-top: 10px; color: var(--ink-700); max-width: 320px; }
 
         .detail-stage { position: relative; }
-        .detail-stage__frame { padding: 6px; }
-        .detail-stage__frame img { width: 100%; max-height: 62vh; object-fit: contain; background: #e9e3d6; }
+        .detail-stage__frame { padding: 6px; display: flex; justify-content: center; background: #e9e3d6; }
+        .detail-stage__photo { position: relative; display: inline-block; max-width: 100%; line-height: 0; }
+        .detail-stage__photo img { display: block; max-width: 100%; max-height: 62vh; width: auto; height: auto; }
+        .detail-stage__photo .detail-stage__lowerthird {
+          position: absolute; inset: 0; width: 100%; height: 100%; max-height: none;
+          object-fit: contain; object-position: bottom; pointer-events: none;
+        }
+        .detail-stage__download {
+          position: absolute; top: 10px; right: 10px; width: 34px; height: 34px; z-index: 2;
+          display: flex; align-items: center; justify-content: center;
+          background: rgba(10, 22, 26, 0.6); border: none; border-radius: 50%; cursor: pointer;
+        }
         .detail-stage__nav {
           position: absolute; top: 50%; transform: translateY(-50%);
           width: 40px; height: 40px; border-radius: 50%; border: none;
@@ -159,7 +182,7 @@ export function MemoryDetail() {
         .detail-stage__nav--prev { left: 10px; }
         .detail-stage__nav--next { right: 10px; }
         .detail-stage__count {
-          position: absolute; right: 14px; bottom: 14px; padding: 5px 10px; border-radius: var(--radius-pill);
+          position: absolute; left: 14px; top: 14px; padding: 5px 10px; border-radius: var(--radius-pill);
           background: rgba(10, 22, 26, 0.6); color: var(--white); font-size: 11.5px; font-weight: 700;
         }
 
@@ -179,5 +202,14 @@ export function MemoryDetail() {
         .detail-timestamp { margin-top: 16px; text-align: center; font-size: 12.5px; color: var(--ink-500); font-weight: 600; }
       `}</style>
     </div>
+  );
+}
+
+function DownloadIcon() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.2" aria-hidden="true">
+      <path d="M12 3v12m0 0-4.5-4.5M12 15l4.5-4.5" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M4 18v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }

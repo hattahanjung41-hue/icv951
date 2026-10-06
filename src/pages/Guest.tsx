@@ -171,7 +171,7 @@ export function Guest() {
   if (phase === 'success') {
     return (
       <div className="guest-shell">
-        <Header backTo="/" backLabel="Home" />
+        <Header backTo="/admin" backLabel="Admin" />
         <main className="container guest-success">
           <div className="paper-note guest-success__card">
             <img src="/assets/torn-paper.webp" alt="" aria-hidden="true" className="guest-success__paper" />
@@ -255,9 +255,9 @@ export function Guest() {
     <div className="guest-shell">
       <Header backTo="/" backLabel="Home" />
       <main className="container guest-form">
-        <p className="kicker">ICV Akselerasi 951</p>
+        <p className="kicker">Farewell Gala Dinner</p>
         <h1 className="guest-form__title eyebrow-script">Share Your Moment</h1>
-        <p className="guest-form__desc">Capture and share the moments that made ICV 951 special.</p>
+        <p className="guest-form__desc">Capture and share the moments that made Farewell Gala Dinner special.</p>
 
         <form onSubmit={handleSubmit} className="guest-form__fields">
           <PhotoPicker

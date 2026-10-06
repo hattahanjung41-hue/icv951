@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import type { Session } from '@supabase/supabase-js';
 import { AdminLogin } from './AdminLogin';
 import { BrandMark } from '../components/BrandMark';
@@ -150,9 +151,14 @@ function AdminDashboard({ onSignOut }: { onSignOut: () => void }) {
       <header className="admin-topbar">
         <div className="container admin-topbar__row">
           <BrandMark compact />
-          <button onClick={onSignOut} className="btn btn-ghost admin-topbar__signout">
-            Sign Out
-          </button>
+          <div className="admin-topbar__actions">
+            <Link to="/guest" className="btn btn-primary admin-btn-sm">
+              Upload Memory
+            </Link>
+            <button onClick={onSignOut} className="btn btn-ghost admin-topbar__signout">
+              Sign Out
+            </button>
+          </div>
         </div>
       </header>
 
@@ -433,6 +439,7 @@ const adminStyles = `
   .admin { min-height: 100dvh; background: var(--sand-50); }
   .admin-topbar { position: sticky; top: 0; z-index: 10; background: var(--white); border-bottom: 1px solid var(--line); }
   .admin-topbar__row { height: 56px; display: flex; align-items: center; justify-content: space-between; }
+  .admin-topbar__actions { display: flex; align-items: center; gap: 8px; }
   .admin-topbar__signout { padding: 8px 14px; min-height: auto; }
 
   .admin-main { padding: 20px 16px 60px; display: flex; flex-direction: column; gap: 22px; }

@@ -16,13 +16,14 @@ on conflict (id) do update set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
--- Anyone (including anonymous guests) can upload — matches the
--- "no login for guests" requirement. Objects always land under
+-- Only admins upload now (operator-run event: the admin is the one taking
+-- photos, via /guest after signing in). Objects always land under
 -- {random-folder}/{photo-id}.{ext}, see src/pages/Guest.tsx.
 drop policy if exists "guests can upload memory photos" on storage.objects;
-create policy "guests can upload memory photos"
+drop policy if exists "admins can upload memory photos" on storage.objects;
+create policy "admins can upload memory photos"
   on storage.objects for insert
-  with check (bucket_id = 'memory-photos');
+  with check (bucket_id = 'memory-photos' and is_admin());
 
 -- Public read (defense in depth; the public bucket flag already
 -- allows unauthenticated GETs via the public URL).

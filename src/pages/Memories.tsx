@@ -31,9 +31,9 @@ export function Memories() {
     <div className="memories-shell">
       <Header backTo="/" backLabel="Home" />
       <main className="container memories-main">
-        <p className="kicker">ICV Akselerasi 951</p>
+        <p className="kicker">Farewell Gala Dinner</p>
         <h1 className="memories-title eyebrow-script">Memory Wall</h1>
-        <p className="memories-desc">Moments, stories, and smiles from ICV 951.</p>
+        <p className="memories-desc">Moments, stories, and smiles from Farewell Gala Dinner.</p>
 
         {error && <p className="memories-error">Connection seems unstable. Please try again in a moment.</p>}
 

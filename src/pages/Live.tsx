@@ -418,8 +418,8 @@ export function Live() {
 
         <div className="live-title">
           <p className="live-title__tagline">
-            <span className="live-title__tagline-line1">Recharge &amp;</span>
-            <span className="live-title__tagline-line2">Rise Together</span>
+            <span className="live-title__tagline-line1">Starry Night</span>
+            <span className="live-title__tagline-line2">Celebrating Excellence 951</span>
           </p>
         </div>
 
@@ -475,7 +475,7 @@ export function Live() {
 
       <span className="live-brand">
         <img src="/assets/tropical-vibes-tag.webp" alt="" aria-hidden="true" className="live-brand__tag" />
-        <span className="live-brand__label">ICV Akselerasi 951</span>
+        <span className="live-brand__label">Farewell Gala Dinner</span>
       </span>
       {offline && <span className="live-status">Reconnecting</span>}
 

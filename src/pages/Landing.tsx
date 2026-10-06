@@ -1,217 +1,273 @@
 import { Link } from 'react-router-dom';
-import { Header } from '../components/Header';
-import { AnimatedWaves } from '../components/AnimatedWaves';
-import { AnimatedSun } from '../components/AnimatedSun';
-import { AnimatedBirds } from '../components/AnimatedBirds';
+
+const GOLD = '#caa23e';
+const GOLD_LIGHT = '#f3dfa0';
+const GOLD_DEEP = '#9a6a24';
+/** The constellation art's own paper tone (sampled from its lower half), so the page continues it seamlessly. */
+const PAPER = '#faf1e3';
 
 export function Landing() {
   return (
     <div className="landing">
-      <Header />
+      <header className="landing-topbar">
+        <div className="container landing-topbar__row">
+          <p className="landing-topbar__brand">
+            <SparkIcon size={14} />
+            FAREWELL GALA DINNER
+          </p>
+          <span className="landing-topbar__badge">INTEGRITAS KUAT, DJP HEBAT</span>
+        </div>
+        <span className="landing-topbar__spark" aria-hidden="true">
+          <SparkIcon size={18} />
+        </span>
+      </header>
 
-      <section className="landing-photo" aria-hidden="false">
-        <img
-          src="/assets/BG-landingpage.png"
-          alt="Saoka Beach Resort — palm-framed sunset cove where ICV Akselerasi 951 takes place"
-          className="landing-photo__img"
-          fetchPriority="high"
-        />
-        <AnimatedSun className="landing-photo__sun" />
-        <AnimatedBirds className="landing-photo__birds" />
-        <div className="landing-photo__scrim" aria-hidden="true" />
-      </section>
+      <main className="landing-hero">
+        <div className="landing-hero__bg" role="presentation" />
+        <div className="landing-hero__art" role="presentation" />
 
-      <main className="landing-content">
-        <p className="kicker">Selamat datang di</p>
-        <h1 className="landing-title">ICV AKSELERASI 951</h1>
-        <p className="landing-tagline eyebrow-script">Recharge &amp; Rise Together</p>
+        <ArcOrnament />
+        <p className="landing-kicker">Selamat datang di</p>
+        <h1 className="landing-title">
+          <span className="landing-title__top">Farewell</span>
+          <span className="landing-title__main">Gala Dinner</span>
+        </h1>
+        <p className="landing-tagline">Starry Night Celebrating Excellence 951</p>
+        <DiamondRule className="landing-rule landing-rule--short" />
         <p className="landing-desc">
-          Saatnya rehat sejenak, mengisi energi, dan melangkah lebih kuat untuk masa depan yang lebih baik.
+          Don&rsquo;t cry because it&rsquo;s over, smile because it happened. New adventures are just around the corner.
         </p>
 
         <div className="landing-actions">
-          <Link to="/guest" className="btn btn-primary btn-block">
-            <span className="btn-icon">
-              <CameraIcon />
+          <Link to="/memories" className="landing-cta">
+            <span className="landing-cta__spark landing-cta__spark--left" aria-hidden="true">
+              <SparkIcon size={16} />
             </span>
-            Leave Your Memory
-          </Link>
-          <Link to="/memories" className="btn btn-secondary btn-block">
-            <span className="btn-icon btn-icon-light">
+            <span className="landing-cta__icon">
               <GalleryIcon />
             </span>
             View Memories
+            <ChevronIcon />
+            <span className="landing-cta__spark landing-cta__spark--right" aria-hidden="true">
+              <SparkIcon size={16} />
+            </span>
           </Link>
         </div>
 
+        <DiamondRule className="landing-rule" />
         <dl className="landing-facts">
-          <EventFact icon="calendar" label="Date" value="12 Sept 2026" />
-          <EventFact icon="clock" label="Time" value="07.00–14.00 WIT" />
-          <EventFact icon="pin" label="Venue" value="Saoka Beach" />
-          <EventFact icon="shirt" label="Dress Code" value="Tropical Vibes" />
+          <EventFact icon="calendar" label="Date" value="6 Okt 2026" />
+          <EventFact icon="clock" label="Time" value="17.00 WIT" />
+          <EventFact icon="pin" label="Venue" value="Rylich Panorama Hotel" />
+          <EventFact icon="bow" label="Dress Code" value="Black-Tie Glamour" />
         </dl>
       </main>
 
       <footer className="landing-footer">
-        <AnimatedWaves className="landing-footer__wave" frontColor="var(--wave-deep)" />
-        <div className="landing-footer__band">
-          <img src="/assets/tropical-vibes-tag.webp" alt="Tropical Vibes Only" className="landing-footer__tag" />
-          <p className="landing-footer__brand">Abadikan momen terbaikmu di ICV 951</p>
-        </div>
+        <img src="/assets/pola bawah 2.png" alt="" aria-hidden="true" className="landing-footer__art" />
+        <p className="landing-footer__brand">Capture your best moments at Farewell Gala Dinner</p>
       </footer>
 
       <style>{`
-        .landing { display: flex; flex-direction: column; background: var(--sand-50); }
-
-        /*
-         * ---- Photo stage: the environment comes first, text follows below it ----
-         * Deliberately short (compact editorial hero, not a full-screen poster) so the
-         * headline, both CTAs and the event-facts row all land within the first mobile
-         * viewport. The crop itself is untouched — see object-position below — this only
-         * shrinks the WINDOW onto that same sky-to-sand scene.
-         */
-        .landing-photo {
-          position: relative;
-          height: 40vh;
-          min-height: 260px;
-          max-height: 400px;
-          overflow: hidden;
-        }
-        /*
-         * object-position keeps the sunset/horizon band (roughly the middle third of the
-         * source art) in frame within the short hero band, while still showing a strip of
-         * sand at the bottom instead of drifting toward "photo of the sky".
-         */
-        .landing-photo__img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 42%; }
-        .landing-photo__sun {
-          position: absolute;
-          top: 4px;
-          right: 6vw;
-          width: 92px;
-          opacity: 0.9;
-        }
-        .landing-photo__birds {
-          position: absolute;
-          top: 14%;
-          left: 8vw;
-          width: 60vw;
-          max-width: 420px;
-          height: 60px;
-          opacity: 0.85;
-        }
-        .landing-photo__scrim {
-          position: absolute;
-          inset: 0;
-          /* Fades late and fast — the sand stays vivid; only the seam where the content
-             panel overlaps (see .landing-content's negative margin) needs easing into it. */
-          background: linear-gradient(180deg, rgba(251, 246, 234, 0) 78%, var(--sand-50) 98%);
-          pointer-events: none;
+        .landing {
+          display: flex; flex-direction: column;
+          min-height: 100vh; min-height: 100dvh;
+          background: ${PAPER};
+          overflow-x: hidden;
         }
 
-        /* ---- Content panel: sits on solid ground, not fighting a photo for contrast ---- */
-        .landing-content {
+        /* ---- Top bar: dark gala header, not the pale sticky header used elsewhere ----
+           Brand + badge are both nowrap pills of fixed text, so on narrow phones (iPhone SE/mini
+           width and below) their combined width can exceed the viewport. flex-wrap lets the badge
+           drop to its own line instead of forcing the whole page to scroll horizontally, and the
+           clamp()'d sizes keep both on one line on most phones before that fallback ever kicks in. */
+        .landing-topbar { position: relative; z-index: 2; background: var(--wave-deep); border-bottom: 2px solid ${GOLD}; }
+        .landing-topbar__row {
+          min-height: 60px; padding: 10px 0; display: flex; align-items: center;
+          justify-content: space-between; gap: 8px 12px; flex-wrap: wrap;
+        }
+        .landing-topbar__brand {
+          display: flex; align-items: center; gap: 8px;
+          font-family: 'Cinzel', serif; font-weight: 600; font-size: clamp(10px, 2.9vw, 13.5px); letter-spacing: 0.06em;
+          color: ${GOLD_LIGHT}; white-space: nowrap;
+        }
+        .landing-topbar__badge {
+          font-size: clamp(8px, 2.3vw, 9.5px); font-weight: 800; letter-spacing: 0.02em; text-transform: uppercase;
+          color: var(--wave-deep); background: linear-gradient(180deg, ${GOLD_LIGHT}, ${GOLD});
+          padding: 6px 12px; border-radius: 999px;
+          border: 1px solid rgba(255, 255, 255, 0.35); white-space: nowrap;
+        }
+        /* The four-point star pinned to the middle of the gold rule under the bar. */
+        .landing-topbar__spark {
+          position: absolute; left: 50%; bottom: 0; transform: translate(-50%, 50%);
+          display: flex; filter: drop-shadow(0 0 4px rgba(243, 223, 160, 0.9));
+        }
+
+        /*
+         * ---- Hero: the constellation art is a background layer pinned to the top at full width;
+         * the text flows over its plain lower half. A spacer sized to the art's drawn portion keeps
+         * the heading clear of the swan's wing at every width.
+         */
+        .landing-hero {
           position: relative;
-          margin-top: -3vh;
-          padding: 0 24px;
-          max-width: 440px;
-          width: 100%;
-          margin-left: auto;
-          margin-right: auto;
+          background: ${PAPER};
+          padding: 0 20px 8px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
           text-align: center;
         }
-        .landing-title {
-          margin-top: 4px;
-          font-size: clamp(1.7rem, 7vw, 2.5rem);
-          color: var(--green-700);
+        .landing-hero > :not(.landing-hero__bg) { position: relative; z-index: 1; }
+        .landing-hero__bg {
+          position: absolute; top: 0; left: 0; right: 0;
+          aspect-ratio: 1109 / 1419;
+          background: url('/assets/Golden Celestial Bird Constellation.png') top center / 100% auto no-repeat;
+          /* Fade the art's bottom edge into the page so a hero taller than the art shows no seam. */
+          -webkit-mask-image: linear-gradient(180deg, #000 86%, transparent 100%);
+          mask-image: linear-gradient(180deg, #000 86%, transparent 100%);
+          pointer-events: none;
         }
-        .landing-tagline { margin-top: 4px; font-size: clamp(1.15rem, 4.6vw, 1.6rem); color: var(--ocean-700); }
+        /* Height of the constellation + swan within the source image (~690 of its 1419px). */
+        .landing-hero__art { width: 100%; aspect-ratio: 1109 / 640; }
+
+        .landing-arc { display: block; width: min(200px, 52vw); height: auto; margin-bottom: 2px; }
+
+        .landing-kicker {
+          display: flex; align-items: center; justify-content: center; gap: 12px;
+          margin-top: 4px;
+          font-size: clamp(11px, 3.1vw, 13px); font-weight: 700; letter-spacing: 0.24em; text-transform: uppercase;
+          color: var(--ink-700);
+        }
+        .landing-kicker::before, .landing-kicker::after { content: ''; width: 32px; height: 1px; background: ${GOLD_DEEP}; }
+
+        .landing-title {
+          margin-top: 6px;
+          display: flex; flex-direction: column; align-items: center;
+          font-family: 'Cinzel', serif; font-weight: 600; line-height: 1; text-transform: uppercase;
+          background: linear-gradient(180deg, #d8ad5c 0%, ${GOLD_DEEP} 55%, #c58f3c 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+        .landing-title__top { font-size: clamp(1.9rem, 9.5vw, 3rem); letter-spacing: 0.02em; }
+        .landing-title__main { margin-top: 4px; font-size: clamp(2.3rem, 12.4vw, 4rem); letter-spacing: 0.01em; }
+
+        .landing-tagline {
+          margin-top: 8px;
+          font-family: 'Great Vibes', cursive; font-size: clamp(1.45rem, 6.6vw, 2.1rem); line-height: 1.15;
+          color: ${GOLD_DEEP};
+        }
+
+        .landing-rule { display: block; width: 100%; max-width: 420px; height: 12px; margin-top: 18px; }
+        .landing-rule--short { max-width: 260px; margin-top: 10px; }
+
         .landing-desc {
           margin: 10px auto 0;
           max-width: 340px;
+          font-family: 'Cormorant Garamond', serif; font-weight: 500;
           color: var(--ink-700);
-          font-size: 14.5px;
-          line-height: 1.5;
+          font-size: clamp(1.02rem, 4.4vw, 1.2rem);
+          line-height: 1.35;
         }
-        .landing-actions {
-          margin-top: 18px;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          max-width: 320px;
-          margin-left: auto;
-          margin-right: auto;
+
+        .landing-actions { margin-top: 22px; display: flex; justify-content: center; }
+        .landing-cta {
+          position: relative;
+          display: inline-flex; align-items: center; justify-content: center; gap: 14px;
+          padding: 12px 26px 12px 14px; border-radius: 999px;
+          background: linear-gradient(180deg, #4a0d16, var(--wave-deep));
+          border: 2px solid ${GOLD};
+          box-shadow: 0 0 0 1px rgba(243, 223, 160, 0.5) inset, 0 12px 28px rgba(46, 7, 13, 0.32);
+          color: ${GOLD_LIGHT}; text-decoration: none;
+          font-family: 'Cormorant Garamond', serif; font-weight: 700; font-size: 1.3rem;
         }
-        .btn-icon {
-          width: 22px;
-          height: 22px;
-          border-radius: 50%;
-          background: rgba(255, 255, 255, 0.22);
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          flex-shrink: 0;
+        .landing-cta__icon {
+          width: 34px; height: 34px; border-radius: 9px;
+          background: rgba(202, 162, 62, 0.14); border: 1px solid rgba(202, 162, 62, 0.55);
+          display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
         }
-        .btn-icon-light { background: var(--ocean-700); }
+        .landing-cta__spark { position: absolute; top: 50%; display: flex; }
+        .landing-cta__spark--left { left: 0; transform: translate(-55%, -50%); }
+        .landing-cta__spark--right { right: 0; transform: translate(55%, -50%); }
 
         .landing-facts {
-          margin: 20px auto 0;
-          padding: 14px 6px 0;
-          max-width: 400px;
+          margin: 14px auto 0;
+          max-width: 440px;
+          width: 100%;
           display: grid;
           grid-template-columns: repeat(4, 1fr);
-          gap: 4px;
-          border-top: 1px solid var(--line);
         }
-        .fact { display: flex; flex-direction: column; align-items: center; gap: 5px; }
+        .fact {
+          display: flex; flex-direction: column; align-items: center; gap: 4px;
+          padding: 0 4px;
+        }
+        .fact + .fact { border-left: 1px solid rgba(202, 162, 62, 0.45); }
+        .fact-icon {
+          width: 36px; height: 36px; margin-bottom: 4px; border-radius: 50%;
+          border: 1.5px solid ${GOLD}; display: flex; align-items: center; justify-content: center;
+        }
         .fact-label {
-          margin: 0; font-size: 9.5px; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase;
+          margin: 0; font-size: 9px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
           color: var(--ink-500);
         }
-        .fact-value { margin: 2px 0 0; font-size: 11.5px; font-weight: 700; color: var(--ink-900); line-height: 1.25; }
-
-        /* ---- Footer wave: same brand band used to close every mobile page ---- */
-        .landing-footer { position: relative; margin-top: 28px; }
-        .landing-footer__wave { width: 100%; height: auto; aspect-ratio: 1920 / 300; display: block; }
-        .landing-footer__band {
-          background: var(--wave-deep);
-          margin-top: -2px;
-          padding: 6px 24px 20px;
-          display: flex;
-          align-items: flex-end;
-          justify-content: space-between;
-          gap: 14px;
+        .fact-value {
+          margin: 0;
+          font-family: 'Cormorant Garamond', serif; font-weight: 700;
+          font-size: clamp(0.88rem, 3.7vw, 1.05rem); color: var(--ink-900); line-height: 1.15;
         }
-        .landing-footer__tag { width: 72px; opacity: 0.95; }
+
+        /*
+         * ---- Footer: the Art Deco frame (transparent PNG) with the brand line set inside its
+         * maroon band. Its transparent top half overlaps the hero slightly so the corner fans rise
+         * beside the facts, like the mockup, while margin-top: auto still pins it to the bottom.
+         */
+        .landing-footer {
+          position: relative; margin-top: auto;
+          width: 100%; max-width: 760px; align-self: center;
+        }
+        .landing-footer__art { display: block; width: 100%; height: auto; margin-top: -6%; pointer-events: none; }
+        /* Inner maroon panel of the band sits at roughly 72%–93% of the image height, 22%–78% of its width. */
         .landing-footer__brand {
-          color: var(--white);
-          font-weight: 700;
-          font-size: 10.5px;
-          letter-spacing: 0.02em;
-          text-align: right;
-          max-width: 170px;
+          position: absolute; top: 72%; bottom: 7%; left: 21%; right: 21%;
+          display: flex; align-items: center; justify-content: center;
+          font-family: 'Great Vibes', cursive; color: ${GOLD_LIGHT};
+          font-size: clamp(11px, 3.2vw, 19px); line-height: 1.05; text-align: center;
         }
 
         @media (min-width: 860px) {
-          .landing-content { max-width: 640px; }
-          .landing-facts { max-width: 560px; }
+          .landing-hero { width: 100%; max-width: 640px; margin: 0 auto; }
+          /* On wide screens the art is a centred column, so also feather its left/right edges. */
+          .landing-hero__bg {
+            -webkit-mask-image: linear-gradient(180deg, #000 86%, transparent 100%),
+              linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
+            -webkit-mask-composite: source-in;
+            mask-image: linear-gradient(180deg, #000 86%, transparent 100%),
+              linear-gradient(90deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
+            mask-composite: intersect;
+          }
+          .landing-footer { max-width: 640px; }
         }
       `}</style>
     </div>
   );
 }
 
-function EventFact({ icon, label, value }: { icon: 'calendar' | 'clock' | 'pin' | 'shirt'; label: string; value: string }) {
+type FactKind = 'calendar' | 'clock' | 'pin' | 'bow';
+
+function EventFact({ icon, label, value }: { icon: FactKind; label: string; value: string }) {
   return (
     <div className="fact">
-      <FactIcon kind={icon} />
+      <span className="fact-icon">
+        <FactIcon kind={icon} />
+      </span>
       <dt className="fact-label">{label}</dt>
       <dd className="fact-value">{value}</dd>
     </div>
   );
 }
 
-function FactIcon({ kind }: { kind: 'calendar' | 'clock' | 'pin' | 'shirt' }) {
-  const common = { width: 15, height: 15, stroke: 'var(--ocean-600)', strokeWidth: 1.8, fill: 'none' };
+function FactIcon({ kind }: { kind: FactKind }) {
+  const common = { width: 17, height: 17, stroke: GOLD_DEEP, strokeWidth: 1.6, fill: 'none' };
   if (kind === 'calendar') {
     return (
       <svg {...common} viewBox="0 0 24 24" aria-hidden="true">
@@ -238,26 +294,54 @@ function FactIcon({ kind }: { kind: 'calendar' | 'clock' | 'pin' | 'shirt' }) {
   }
   return (
     <svg {...common} viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M8 4 4 7l2 3 2-1v11h8V9l2 1 2-3-4-3-2 2-2-2z" strokeLinejoin="round" />
+      <path d="M12 10 4 6v8l8-4zm0 0 8-4v8l-8-4z" strokeLinejoin="round" />
+      <path d="m11 11-3 9M13 11l3 9" strokeLinecap="round" />
     </svg>
   );
 }
 
-function CameraIcon() {
+/** Thin gold arc with a star at its crown, sitting just above the kicker. */
+function ArcOrnament() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" aria-hidden="true">
-      <path d="M4 8h3l2-2h6l2 2h3v11H4z" strokeLinejoin="round" />
-      <circle cx="12" cy="13.5" r="3.3" />
+    <svg className="landing-arc" viewBox="0 0 200 30" fill="none" aria-hidden="true">
+      <path d="M8 28 Q100 4 192 28" stroke={GOLD} strokeWidth="1.2" />
+      <path d="M100 0c.8 6 2.6 8.6 7 10-4.4 1.4-6.2 4-7 10-.8-6-2.6-8.6-7-10 4.4-1.4 6.2-4 7-10z" fill={GOLD} />
+    </svg>
+  );
+}
+
+/** Hairline rule with a small diamond star in the middle. */
+function DiamondRule({ className }: { className: string }) {
+  return (
+    <svg className={className} viewBox="0 0 420 12" preserveAspectRatio="none" fill="none" aria-hidden="true">
+      <path d="M0 6h196M224 6h196" stroke={GOLD} strokeOpacity="0.7" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+      <path d="M210 0l3 6-3 6-3-6z M199 6l3-1.6v3.2z M221 6l-3-1.6v3.2z" fill={GOLD} />
     </svg>
   );
 }
 
 function GalleryIcon() {
   return (
-    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2" aria-hidden="true">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke={GOLD_LIGHT} strokeWidth="1.8" aria-hidden="true">
       <rect x="3" y="4" width="18" height="16" rx="2" />
       <circle cx="9" cy="10" r="1.6" />
       <path d="M4 17l5-5 4 4 3-3 4 4" strokeLinejoin="round" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ChevronIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke={GOLD_LIGHT} strokeWidth="2.2" aria-hidden="true">
+      <path d="m9 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SparkIcon({ size }: { size: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill={GOLD} aria-hidden="true">
+      <path d="M12 2c1 4 3 6 7 7-4 1-6 3-7 7-1-4-3-6-7-7 4-1 6-3 7-7z" />
     </svg>
   );
 }

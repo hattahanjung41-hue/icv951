@@ -1,7 +1,7 @@
-# ICV Akselerasi 951 — Memory Wall
+# Farewell Gala Dinner — Memory Wall
 
-A production digital guest book for **ICV AKSELERASI 951 · Recharge & Rise Together**
-(Saoka Beach Resort, 12 Sept 2026). Guests scan a QR code, upload photos from their
+A production digital guest book for **FAREWELL GALA DINNER · Starry Night Celebrating Excellence 951**
+(Rylich Panorama Hotel Sorong, 6 Oktober 2026). Guests scan a QR code, upload photos from their
 phones, and those moments appear on a public Memory Wall and a cinematic Live Display
 for the venue's TV/projector — all in real time.
 
