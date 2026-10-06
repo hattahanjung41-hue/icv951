@@ -171,7 +171,7 @@ export function Guest() {
   if (phase === 'success') {
     return (
       <div className="guest-shell">
-        <Header backTo="/admin" backLabel="Admin" />
+        <Header backTo="/" backLabel="Home" />
         <main className="container guest-success">
           <div className="paper-note guest-success__card">
             <img src="/assets/torn-paper.webp" alt="" aria-hidden="true" className="guest-success__paper" />

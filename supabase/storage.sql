@@ -16,14 +16,14 @@ on conflict (id) do update set
   file_size_limit = excluded.file_size_limit,
   allowed_mime_types = excluded.allowed_mime_types;
 
--- Only admins upload now (operator-run event: the admin is the one taking
--- photos, via /guest after signing in). Objects always land under
--- {random-folder}/{photo-id}.{ext}, see src/pages/Guest.tsx.
+-- Guests upload their own photos via /guest (no login). Objects always land
+-- under {random-folder}/{photo-id}.{ext}, see src/pages/Guest.tsx. The bucket
+-- limits above (images only, 5 MB) still apply.
 drop policy if exists "guests can upload memory photos" on storage.objects;
 drop policy if exists "admins can upload memory photos" on storage.objects;
-create policy "admins can upload memory photos"
+create policy "guests can upload memory photos"
   on storage.objects for insert
-  with check (bucket_id = 'memory-photos' and is_admin());
+  with check (bucket_id = 'memory-photos');
 
 -- Public read (defense in depth; the public bucket flag already
 -- allows unauthenticated GETs via the public URL).

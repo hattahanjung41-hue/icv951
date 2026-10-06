@@ -182,12 +182,12 @@ create policy "public can read visible memories"
   on memories for select
   using (is_hidden = false or is_admin());
 
--- Only admins upload now (operator-run event: the admin is the one taking photos).
+-- Guests upload their own photos (no login). Hide/edit/delete stay admin-only.
 drop policy if exists "guests can create memories" on memories;
 drop policy if exists "admins can create memories" on memories;
-create policy "admins can create memories"
+create policy "guests can create memories"
   on memories for insert
-  with check (is_hidden = false and is_admin());
+  with check (is_hidden = false);
 
 drop policy if exists "admins can update memories" on memories;
 create policy "admins can update memories"
@@ -213,11 +213,20 @@ create policy "public can read photos of visible memories"
     )
   );
 
+-- Guests may only attach photos to a memory created in the last hour (their own fresh upload).
 drop policy if exists "guests can add photos to any memory" on memory_photos;
 drop policy if exists "admins can add photos to any memory" on memory_photos;
-create policy "admins can add photos to any memory"
+drop policy if exists "guests can add photos to new memories" on memory_photos;
+create policy "guests can add photos to new memories"
   on memory_photos for insert
-  with check (is_admin());
+  with check (
+    is_admin()
+    or exists (
+      select 1 from memories m
+      where m.id = memory_photos.memory_id
+        and m.created_at > now() - interval '1 hour'
+    )
+  );
 
 drop policy if exists "admins can delete photos" on memory_photos;
 create policy "admins can delete photos"
