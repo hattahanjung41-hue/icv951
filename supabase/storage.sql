@@ -8,7 +8,7 @@ values (
   'memory-photos',
   'memory-photos',
   true, -- public read via getPublicUrl(), no signed URLs needed
-  5242880, -- 5 MB hard ceiling per object (compressed photos target ~500KB)
+  5242880, -- 5 MB hard ceiling per object (uploads are capped at 4.5MB client-side, see imageCompression.ts)
   array['image/jpeg', 'image/png', 'image/webp']
 )
 on conflict (id) do update set

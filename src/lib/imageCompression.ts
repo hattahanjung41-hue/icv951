@@ -7,20 +7,17 @@ export interface CompressedResult {
 }
 
 /**
- * Compresses an image client-side before upload.
- * Strategy: resize to a max dimension of ~1920px, target ~500KB,
- * prefer WEBP, fall back to JPEG when the browser/library can't
+ * Prepares an image client-side before upload.
+ * Strategy: resize to a max dimension of ~1920px and re-encode once at high
+ * quality — no small file-size target, so photos keep their detail.
+ * Prefers WEBP, falls back to JPEG when the browser/library can't
  * produce WEBP for a given source (e.g. some HEIC conversions).
- * Small-enough source images are only lightly re-encoded, not
- * forced down to the target size at the cost of visible quality.
  */
 export async function compressPhoto(file: File): Promise<CompressedResult> {
-  const targetSizeMB = 0.5;
   const maxDimension = 1920;
-
-  // Already small (e.g. a screenshot) — avoid unnecessary degradation,
-  // just cap dimensions if it happens to be huge.
-  const skipHeavyCompression = file.size <= targetSizeMB * 1024 * 1024;
+  // Not a quality target: only a safety ceiling just under the storage bucket's
+  // 5 MB per-object limit (supabase/storage.sql), so an upload can never be rejected.
+  const safetyCeilingMB = 4.5;
 
   let outputType = 'image/webp';
   // Safari/older iOS WebView support for WEBP output can be inconsistent;
@@ -36,10 +33,10 @@ export async function compressPhoto(file: File): Promise<CompressedResult> {
 
   const compressed = await imageCompression(file, {
     maxWidthOrHeight: maxDimension,
-    maxSizeMB: skipHeavyCompression ? Math.max(targetSizeMB, file.size / 1024 / 1024) : targetSizeMB,
+    maxSizeMB: safetyCeilingMB,
     useWebWorker: true,
     fileType: outputType,
-    initialQuality: 0.82,
+    initialQuality: 0.92,
     alwaysKeepResolution: false,
   });
 
